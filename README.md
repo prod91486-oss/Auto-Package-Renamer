@@ -1,27 +1,26 @@
-# ⚡ Dynamic Rename Packer
+# ⚡ DYNAMIC RENAME PACKER ⚡
+### 🚀 The Ultimate Android/Kotlin Package Renaming CLI Tool
 
-> A high-performance, fully automated CLI tool designed to seamlessly rename Android/Kotlin package structures with a premium terminal UI. Built for speed, accuracy, and mobile compatibility.
+[![Developer](https://img.shields.io/badge/Developer-%40DynamicOwner-cyan?style=for-the-badge&logo=github)](https://github.com/prod91486-oss)
+[![Version](https://img.shields.io/badge/Version-6.4_Auto--Detect-yellow?style=for-the-badge)]()
+[![Platform](https://img.shields.io/badge/Platform-Termux%20%7C%20AndroidIDE%20%7C%20Linux-green?style=for-the-badge)]()
 
-**Developer:** @DynamicOwner
-
----
-
-## 📖 Overview
-
-Renaming packages in Android projects can be tedious and error-prone if done manually. **Dynamic Rename Packer** automates this entire process. It intelligently detects your project structure, replaces all package references across Java, Kotlin, XML, and Gradle files, restructures your directories, and syncs your Gradle `applicationId`—all within seconds.
+> **Dynamic Rename Packer** is a high-performance, fully automated CLI tool designed to seamlessly rename Android/Kotlin package structures. It features a premium terminal UI, intelligent auto-detection, and blazing-fast execution.
 
 ---
 
 ## ✨ Key Features
 
-- **🔍 Smart Auto-Detection:** Automatically detects the project path from your current directory and extracts the old package name from `build.gradle`, `AndroidManifest.xml`, or source files.
-- **⚡ Ultra-Fast Execution:** Optimized loop delays for near-instantaneous results.
-- **📱 Mobile-Friendly UI:** Perfectly aligned box borders and centered text, specifically optimized for small terminal screens (AndroidIDE, Termux, etc.).
-- **📊 Accurate Progress Tracking:** Scans only files matching the old package and displays a real-time 0% to 100% progress bar.
-- **📦 Auto Directory Restructuring:** Automatically creates the new directory structure and moves your source files.
-- **🔧 Gradle Sync:** Auto-updates the `applicationId` in `build.gradle` and `build.gradle.kts` files.
-- **🚪 Clean Auto-Exit:** Automatically closes the terminal session upon completion (bypasses the "Press Enter" prompt on AndroidIDE).
-- **🎨 Premium Multicolour UI:** Beautiful gradient colors, smooth spinners, and a professional terminal experience.
+| Feature | Description |
+| :--- | :--- |
+| 🔍 **Smart Auto-Detect** | Automatically finds your project path and extracts the old package name from `build.gradle` or `AndroidManifest.xml`. |
+| ⚡ **Ultra-Fast Execution** | Optimized loop delays ensure the entire process completes in seconds. |
+| 📱 **Mobile-Friendly UI** | Perfectly aligned borders and centered text, optimized for small terminal screens (AndroidIDE, Termux). |
+| 📊 **Real-Time Progress** | Accurately scans only relevant files and displays a smooth `0%` to `100%` progress bar. |
+| 📦 **Auto Restructuring** | Automatically creates the new directory hierarchy and moves your source files. |
+| 🔧 **Gradle Sync** | Instantly updates the `applicationId` in your `build.gradle` and `build.gradle.kts` files. |
+| 🚪 **Clean Auto-Exit** | Automatically closes the terminal session upon completion (no more "Press Enter" prompts). |
+| 🎨 **Premium UI** | Beautiful gradient colors, smooth spinners, and an elegant multicolour design. |
 
 ---
 
@@ -29,9 +28,9 @@ Renaming packages in Android projects can be tedious and error-prone if done man
 
 You can run this tool directly from GitHub without cloning the repository. 
 
-> **Note:** The script uses auto-detection. You must `cd` into your Android project directory before running the command.
+> [!IMPORTANT]
+> **Before running:** You must navigate into your Android project directory first! The script uses auto-detection and needs to be run from inside your project folder.
 
-Open your terminal (AndroidIDE, Termux, or Linux) and run:
-
-```bash
-cd /path/to/your/android/project && bash <(curl -sL https://raw.githubusercontent.com/prod91486-oss/Auto-Package-Renamer/main/Auto-Package-Rename.sh)
+1. **Navigate to your project folder:**
+   ```bash
+   cd /storage/emulated/0/AndroidIDEProjects/YOUR_PROJECT_NAME
