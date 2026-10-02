@@ -15,12 +15,16 @@ BG_PURPLE="${ESC}[48;5;99m"; BG_BLUE="${ESC}[48;5;25m"; BG_DARK="${ESC}[48;5;235
 G1="${ESC}[38;5;201m"; G2="${ESC}[38;5;171m"; G3="${ESC}[38;5;141m"
 G4="${ESC}[38;5;105m"; G5="${ESC}[38;5;75m"; G6="${ESC}[38;5;87m"; G7="${ESC}[38;5;46m"
 
+# ⚡ TURBO FAST DELAYS
 D1=0; D2=0.0005; D3=0.001
+
+# ─────────── BOX WIDTH (Perfect for Mobile) ───────────
 W=32; TOTAL_W=34
 
 # ─────────── HELPERS ───────────
 strip_ansi() { echo -e "$1" | sed "s/\x1b\[[0-9;]*[mK]//g"; }
 shorten() { local s="$1"; if [ ${#s} -gt 28 ]; then echo "...${s: -25}"; else echo "$s"; fi; }
+
 type_text() {
   local t="$1" d="${2:-$D2}"
   for ((i=0;i<${#t};i++)); do printf "%s" "${t:$i:1}"; sleep "$d"; done
@@ -73,30 +77,17 @@ line_center() {
 }
 
 # ─────────── ULTIMATE AUTO EXIT ───────────
-# Runs on EXIT/INT/TERM — tries multiple methods to close terminal
 cleanup() {
-  # Prevent recursion
   trap - EXIT INT TERM
   printf "\n  %b⚡ Closing terminal...%b\n" "$YELLOW" "$RESET"
   stty sane 2>/dev/null
   sleep 0.4
-
-  # Method 1: AndroidIDE broadcast intent
   am broadcast -a com.itsaky.androidide.CLOSE_TERMINAL >/dev/null 2>&1
-  # Method 2: Termux broadcast intent
   am broadcast -a com.termux.app.closesession >/dev/null 2>&1
-  # Method 3: Send Ctrl+D (EOF) to terminal — parent shell reads it
   printf '\004' > /dev/tty 2>/dev/null
-
-  # Method 4: SIGKILL parent login shell (bypasses "press Enter" prompt)
   kill -9 $PPID 2>/dev/null
-
-  # Method 5: Spawn detached killer — kills parent after our death
-  ( sleep 0.3; kill -9 $PPID 2>/dev/null ) &
-  disown 2>/dev/null
-
-  sleep 0.2
-  exit 0
+  ( sleep 0.3; kill -9 $PPID 2>/dev/null ) & disown 2>/dev/null
+  sleep 0.2; exit 0
 }
 trap cleanup EXIT INT TERM
 
@@ -224,5 +215,4 @@ line_bot "$G7"; printf "\n"
 center_text "${BOLD}${GREEN}🚀 Thank you for choosing DRP! 🚀${RESET}"
 printf "\n  %b👨‍💻 [%b@DynamicOwner%b]%b  %b✨ Successfully Completed!%b\n" "$GRAY" "$CYAN" "$GRAY" "$RESET" "$YELLOW" "$RESET"
 
-# exit 0 triggers cleanup() via trap
 exit 0
