@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #───────────────────────────────────────────────────────────────
-#   ⚡ DYNAMIC RENAME PACKER v6.3 ULTIMATE ⚡
+#   ⚡ DYNAMIC RENAME PACKER v6.4 AUTO-DETECT ⚡
 #   Developer : @DynamicOwner
 #───────────────────────────────────────────────────────────────
 set -o pipefail
@@ -15,16 +15,12 @@ BG_PURPLE="${ESC}[48;5;99m"; BG_BLUE="${ESC}[48;5;25m"; BG_DARK="${ESC}[48;5;235
 G1="${ESC}[38;5;201m"; G2="${ESC}[38;5;171m"; G3="${ESC}[38;5;141m"
 G4="${ESC}[38;5;105m"; G5="${ESC}[38;5;75m"; G6="${ESC}[38;5;87m"; G7="${ESC}[38;5;46m"
 
-# ⚡ TURBO FAST DELAYS
 D1=0; D2=0.0005; D3=0.001
-
-# ─────────── BOX WIDTH (Perfect for Mobile) ───────────
 W=32; TOTAL_W=34
 
 # ─────────── HELPERS ───────────
 strip_ansi() { echo -e "$1" | sed "s/\x1b\[[0-9;]*[mK]//g"; }
 shorten() { local s="$1"; if [ ${#s} -gt 28 ]; then echo "...${s: -25}"; else echo "$s"; fi; }
-
 type_text() {
   local t="$1" d="${2:-$D2}"
   for ((i=0;i<${#t};i++)); do printf "%s" "${t:$i:1}"; sleep "$d"; done
@@ -76,7 +72,53 @@ line_center() {
   printf " %b│%b\n" "$c" "$RESET"
 }
 
-# ─────────── ULTIMATE AUTO EXIT ───────────
+# ─────────── AUTO-DETECT PROJECT PATH ───────────
+detect_project() {
+  local dir="$1"
+  # Check current dir and up to 4 parent levels
+  for _ in 1 2 3 4 5; do
+    if [[ -f "$dir/settings.gradle" || -f "$dir/settings.gradle.kts" ]]; then
+      echo "$dir"; return 0
+    fi
+    # Android project with app/ folder
+    if [[ -d "$dir/app" && ( -f "$dir/build.gradle" || -f "$dir/build.gradle.kts" ) ]]; then
+      echo "$dir"; return 0
+    fi
+    local parent=$(dirname "$dir")
+    [[ "$parent" == "$dir" ]] && break
+    dir="$parent"
+  done
+  return 1
+}
+
+# ─────────── AUTO-DETECT OLD PACKAGE ───────────
+detect_old_pkg() {
+  local proj="$1" pkg=""
+  # 1. Try build.gradle (app module)
+  for g in "$proj/app/build.gradle" "$proj/app/build.gradle.kts" "$proj/build.gradle" "$proj/build.gradle.kts"; do
+    [[ -f "$g" ]] || continue
+    pkg=$(grep -E "applicationId\s*[=]?\s*['\"]" "$g" 2>/dev/null | head -1 | sed -E "s/.*applicationId[[:space:]]*[=]?[[:space:]]*['\"]([^'\"]+)['\"].*/\1/")
+    [[ -n "$pkg" ]] && { echo "$pkg"; return 0; }
+    pkg=$(grep -E "namespace\s*[=]?\s*['\"]" "$g" 2>/dev/null | head -1 | sed -E "s/.*namespace[[:space:]]*[=]?[[:space:]]*['\"]([^'\"]+)['\"].*/\1/")
+    [[ -n "$pkg" ]] && { echo "$pkg"; return 0; }
+  done
+  # 2. Try AndroidManifest.xml
+  for m in "$proj/app/src/main/AndroidManifest.xml" "$proj/src/main/AndroidManifest.xml"; do
+    [[ -f "$m" ]] || continue
+    pkg=$(grep -E "package\s*=\s*['\"]" "$m" 2>/dev/null | head -1 | sed -E "s/.*package\s*=\s*['\"]([^'\"]+)['\"].*/\1/")
+    [[ -n "$pkg" ]] && { echo "$pkg"; return 0; }
+  done
+  # 3. Try any .kt/.java file inside src/
+  local kt
+  kt=$(find "$proj" -type f \( -name "*.kt" -o -name "*.java" \) -path "*/src/main/*" 2>/dev/null | head -1)
+  if [[ -n "$kt" ]]; then
+    pkg=$(grep -E "^package\s+" "$kt" 2>/dev/null | head -1 | awk '{print $2}' | tr -d ';')
+    [[ -n "$pkg" ]] && { echo "$pkg"; return 0; }
+  fi
+  return 1
+}
+
+# ─────────── AUTO EXIT ───────────
 cleanup() {
   trap - EXIT INT TERM
   printf "\n  %b⚡ Closing terminal...%b\n" "$YELLOW" "$RESET"
@@ -94,12 +136,12 @@ trap cleanup EXIT INT TERM
 # ─────────── INTRO ───────────
 clear; printf "\n"
 center_text "${BOLD}${MAGENTA}⚡ DYNAMIC RENAME PACKER ⚡${RESET}"
-center_text "${GRAY}Ultimate • v6.3 • VIP Edition${RESET}"
+center_text "${GRAY}Auto-Detect • v6.4 • VIP Edition${RESET}"
 center_text "${GREEN}Developer : @DynamicOwner${RESET}"
 printf "\n"
 printf "  %b" "$G6"; for ((i=0;i<W;i++)); do printf "━"; done; printf "%b\n\n" "$RESET"
-type_text "  ${G1}◆${RESET} ${WHITE}Android & Kotlin renamer${RESET}" 0.001
-type_text "  ${G2}◆${RESET} ${WHITE}Smart directory restructuring${RESET}" 0.001
+type_text "  ${G1}◆${RESET} ${WHITE}Auto-detect project path${RESET}" 0.001
+type_text "  ${G2}◆${RESET} ${WHITE}Auto-detect OLD package${RESET}" 0.001
 type_text "  ${G3}◆${RESET} ${WHITE}Auto Gradle applicationId sync${RESET}" 0.001
 printf "\n"
 ( sleep 0.1 ) & spinner "Booting" $!
@@ -112,17 +154,59 @@ line_center "$G1" "${BG_PURPLE}${WHITE}${BOLD} 🚀 DYNAMIC RENAME PACKER 🚀 $
 line_mid "$G2"
 line_text "$G2" "$(printf "%b  Tool :%b %b%s%b" "$GRAY" "$RESET" "$PINK" "Dynamic Rename" "$RESET")"
 line_text "$G2" "$(printf "%b  Dev  :%b %b%s%b" "$GRAY" "$RESET" "$CYAN" "@DynamicOwner" "$RESET")"
-line_text "$G2" "$(printf "%b  Ver  :%b %b%s%b" "$GRAY" "$RESET" "$YELLOW" "v6.3 Ultimate" "$RESET")"
+line_text "$G2" "$(printf "%b  Ver  :%b %b%s%b" "$GRAY" "$RESET" "$YELLOW" "v6.4 Auto" "$RESET")"
 line_bot "$G3"; printf "\n"
 
-# ─────────── STEP 1 ───────────
+# ─────────── STEP 1 : AUTO DETECT ───────────
 line_top "$G5"
-line_center "$G5" "${BG_BLUE}${WHITE}${BOLD} ⚙️  STEP 1 · Configuration ⚙️  ${RESET}"
+line_center "$G5" "${BG_BLUE}${WHITE}${BOLD} ⚙️  STEP 1 · Auto Detect ⚙️  ${RESET}"
 line_bot "$G5"; printf "\n"
 
-printf "\n  %b📁%b  %bEnter project path%b\n  %b❯%b " "$G6" "$RESET" "$WHITE" "$RESET" "$G6" "$RESET"; read -r PROJECT_DIR
-printf "  %b🔸%b  %bEnter OLD package%b\n  %b❯%b " "$G1" "$RESET" "$WHITE" "$RESET" "$G1" "$RESET"; read -r OLD_PKG
-printf "  %b🔹%b  %bEnter NEW package%b\n  %b❯%b " "$G3" "$RESET" "$WHITE" "$RESET" "$G3" "$RESET"; read -r NEW_PKG
+# --- Project Path ---
+( sleep 0.3 ) & spinner "Detecting project path" $!
+
+AUTO_PROJ=$(detect_project "$PWD")
+if [[ -n "$AUTO_PROJ" ]]; then
+  printf "  %b✔ Detected:%b %b%s%b\n\n" "$GREEN" "$RESET" "$CYAN" "$(shorten "$AUTO_PROJ")" "$RESET"
+  printf "  %b❯ Use this path?%b [%by%b/%bn%b] " "$YELLOW" "$RESET" "$GREEN" "$RESET" "$RED" "$RESET"
+  read -r useit
+  if [[ "$useit" =~ ^[Yy] ]]; then
+    PROJECT_DIR="$AUTO_PROJ"
+  else
+    printf "  %b📁 Enter project path%b\n  %b❯%b " "$G6" "$RESET" "$WHITE" "$RESET" "$G6" "$RESET"
+    read -r PROJECT_DIR
+  fi
+else
+  printf "  %b⚠ Auto-detect failed%b\n\n" "$YELLOW" "$RESET"
+  printf "  %b📁 Enter project path%b\n  %b❯%b " "$G6" "$RESET" "$WHITE" "$RESET" "$G6" "$RESET"
+  read -r PROJECT_DIR
+fi
+printf "\n"
+
+# --- OLD Package ---
+( sleep 0.3 ) & spinner "Detecting OLD package" $!
+
+AUTO_PKG=$(detect_old_pkg "$PROJECT_DIR")
+if [[ -n "$AUTO_PKG" ]]; then
+  printf "  %b✔ Detected:%b %b%s%b\n\n" "$GREEN" "$RESET" "$PINK" "$AUTO_PKG" "$RESET"
+  printf "  %b❯ Use this package?%b [%by%b/%bn%b] " "$YELLOW" "$RESET" "$GREEN" "$RESET" "$RED" "$RESET"
+  read -r useit
+  if [[ "$useit" =~ ^[Yy] ]]; then
+    OLD_PKG="$AUTO_PKG"
+  else
+    printf "  %b🔸 Enter OLD package%b\n  %b❯%b " "$G1" "$RESET" "$WHITE" "$RESET" "$G1" "$RESET"
+    read -r OLD_PKG
+  fi
+else
+  printf "  %b⚠ Auto-detect failed%b\n\n" "$YELLOW" "$RESET"
+  printf "  %b🔸 Enter OLD package%b\n  %b❯%b " "$G1" "$RESET" "$WHITE" "$RESET" "$G1" "$RESET"
+  read -r OLD_PKG
+fi
+printf "\n"
+
+# --- NEW Package ---
+printf "  %b🔹 Enter NEW package%b\n  %b❯%b " "$G3" "$RESET" "$WHITE" "$RESET" "$G3" "$RESET"
+read -r NEW_PKG
 printf "\n"
 
 if [[ ! -d "$PROJECT_DIR" ]]; then
