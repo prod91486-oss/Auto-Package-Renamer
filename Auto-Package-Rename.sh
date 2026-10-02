@@ -75,12 +75,10 @@ line_center() {
 # ─────────── AUTO-DETECT PROJECT PATH ───────────
 detect_project() {
   local dir="$1"
-  # Check current dir and up to 4 parent levels
   for _ in 1 2 3 4 5; do
     if [[ -f "$dir/settings.gradle" || -f "$dir/settings.gradle.kts" ]]; then
       echo "$dir"; return 0
     fi
-    # Android project with app/ folder
     if [[ -d "$dir/app" && ( -f "$dir/build.gradle" || -f "$dir/build.gradle.kts" ) ]]; then
       echo "$dir"; return 0
     fi
@@ -94,7 +92,6 @@ detect_project() {
 # ─────────── AUTO-DETECT OLD PACKAGE ───────────
 detect_old_pkg() {
   local proj="$1" pkg=""
-  # 1. Try build.gradle (app module)
   for g in "$proj/app/build.gradle" "$proj/app/build.gradle.kts" "$proj/build.gradle" "$proj/build.gradle.kts"; do
     [[ -f "$g" ]] || continue
     pkg=$(grep -E "applicationId\s*[=]?\s*['\"]" "$g" 2>/dev/null | head -1 | sed -E "s/.*applicationId[[:space:]]*[=]?[[:space:]]*['\"]([^'\"]+)['\"].*/\1/")
@@ -102,13 +99,11 @@ detect_old_pkg() {
     pkg=$(grep -E "namespace\s*[=]?\s*['\"]" "$g" 2>/dev/null | head -1 | sed -E "s/.*namespace[[:space:]]*[=]?[[:space:]]*['\"]([^'\"]+)['\"].*/\1/")
     [[ -n "$pkg" ]] && { echo "$pkg"; return 0; }
   done
-  # 2. Try AndroidManifest.xml
   for m in "$proj/app/src/main/AndroidManifest.xml" "$proj/src/main/AndroidManifest.xml"; do
     [[ -f "$m" ]] || continue
     pkg=$(grep -E "package\s*=\s*['\"]" "$m" 2>/dev/null | head -1 | sed -E "s/.*package\s*=\s*['\"]([^'\"]+)['\"].*/\1/")
     [[ -n "$pkg" ]] && { echo "$pkg"; return 0; }
   done
-  # 3. Try any .kt/.java file inside src/
   local kt
   kt=$(find "$proj" -type f \( -name "*.kt" -o -name "*.java" \) -path "*/src/main/*" 2>/dev/null | head -1)
   if [[ -n "$kt" ]]; then
@@ -162,9 +157,7 @@ line_top "$G5"
 line_center "$G5" "${BG_BLUE}${WHITE}${BOLD} ⚙️  STEP 1 · Auto Detect ⚙️  ${RESET}"
 line_bot "$G5"; printf "\n"
 
-# --- Project Path ---
 ( sleep 0.3 ) & spinner "Detecting project path" $!
-
 AUTO_PROJ=$(detect_project "$PWD")
 if [[ -n "$AUTO_PROJ" ]]; then
   printf "  %b✔ Detected:%b %b%s%b\n\n" "$GREEN" "$RESET" "$CYAN" "$(shorten "$AUTO_PROJ")" "$RESET"
@@ -183,9 +176,7 @@ else
 fi
 printf "\n"
 
-# --- OLD Package ---
 ( sleep 0.3 ) & spinner "Detecting OLD package" $!
-
 AUTO_PKG=$(detect_old_pkg "$PROJECT_DIR")
 if [[ -n "$AUTO_PKG" ]]; then
   printf "  %b✔ Detected:%b %b%s%b\n\n" "$GREEN" "$RESET" "$PINK" "$AUTO_PKG" "$RESET"
@@ -204,7 +195,6 @@ else
 fi
 printf "\n"
 
-# --- NEW Package ---
 printf "  %b🔹 Enter NEW package%b\n  %b❯%b " "$G3" "$RESET" "$WHITE" "$RESET" "$G3" "$RESET"
 read -r NEW_PKG
 printf "\n"
@@ -231,24 +221,19 @@ printf "\n"
 line_top "$G1"
 line_center "$G1" "${BG_PURPLE}${WHITE}${BOLD} 🔄 STEP 2 · Replacing Refs 🔄 ${RESET}"
 line_bot "$G1"; printf "\n"
-
 ( sleep 0.3 ) & SP_PID=$!
 spinner "Analyzing project" $SP_PID
-
 mapfile -t FILES < <(find "$PROJECT_DIR" -type f \( \
   -name "*.java" -o -name "*.kt" -o -name "*.kts" \
   -o -name "*.xml" -o -name "*.gradle" \) \
   -exec grep -l "$OLD_PKG" {} + 2>/dev/null)
-
 TOTAL=${#FILES[@]}
-
 if [[ $TOTAL -eq 0 ]]; then
   printf "\n  %bℹ No files contain%b %b%s%b\n\n" "$YELLOW" "$RESET" "$PINK" "$OLD_PKG" "$RESET"
 else
   printf "\n  %b🎯 Found%b %b%d%b %bfiles matching%b %b%s%b\n\n" \
     "$G6" "$RESET" "$YELLOW" "$TOTAL" "$RESET" "$WHITE" "$RESET" "$PINK" "$OLD_PKG" "$RESET"
 fi
-
 UPDATED=0; IDX=0
 for file in "${FILES[@]}"; do
   ((IDX++))
